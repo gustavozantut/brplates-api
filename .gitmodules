@@ -1,0 +1,12 @@
+[submodule "reader/easyocr_brplates"]
+	path = reader/easyocr_brplates
+	url = https://github.com/gustavozantut/easyocr_brplates
+[submodule "reader/openalpr"]
+	path = reader/openalpr
+	url = https://github.com/gustavozantut/openalpr
+[submodule "localizer/ultralytics"]
+	path = localizer/ultralytics
+	url = https://github.com/gustavozantut/ultralytics
+[submodule "controller_api"]
+	path = controller_api
+	url = https://github.com/gustavozantut/controller_api
