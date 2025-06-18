@@ -89,7 +89,7 @@ services:
   ezocr:
     image: guhzantut/kiplaca-anpr-ez:latest # Sua imagem ezOCR existente
     build: # <-- Adicione esta seção para construir a imagem localmente
-      context: ./reader/easyocr # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+      context: ./reader/easyocr_brplates # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
       dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
     deploy:
       resources:
