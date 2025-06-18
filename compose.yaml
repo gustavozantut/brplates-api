@@ -90,7 +90,7 @@ services:
       - ezocr
     # O comando que o Celery Worker vai executar para iniciar
     # -A app.main:celery_app: Aponta para a instância do Celery que vamos criar em app/main.py
-    command: ["celery", "-A", "app.celery_app.celery", "worker", "-l", "info", "-P", "solo"] # -P solo para dev
+    command: ["celery", "-A", "app.celery_app.celery", "worker", "-l", "info", "--concurrency=4"] # -P solo para dev
 
   # Serviço YOLO
   yolo:
