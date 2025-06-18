@@ -36,6 +36,21 @@ services:
   redis:
     image: redis:6-alpine # Imagem Redis leve
     restart: always
+    command: [
+      "redis-server",
+      "--dir", "/data",
+      "--appendonly", "yes",
+      "--appendfsync", "everysec",
+      "--save", "900", "1",
+      "--save", "300", "10",
+      "--save", "60", "10000",
+      "--maxmemory", "5gb",
+      "--maxmemory-policy", "allkeys-lru"
+    ]
+    deploy:
+      resources:
+        limits:
+          memory: 5G
     volumes:
       - ./redis_data:/data # Volume persistente para os dados do Redis
     expose:
