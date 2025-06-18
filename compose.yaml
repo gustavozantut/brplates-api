@@ -3,7 +3,7 @@ services:
     image: nginx:stable-alpine # Imagem Nginx leve e estável
     restart: always
     ports:
-      - "8321:80" # <-- Nginx escutará na porta 112 do HOST e encaminhará para a porta 80 do CONTAINER Nginx
+      - "8321:80" # <-- Nginx escutará na porta 80 do HOST e encaminhará para a porta 80 do CONTAINER Nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Monta seu arquivo de configuração
     depends_on:
