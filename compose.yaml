@@ -1,0 +1,107 @@
+services:
+  nginx:
+    image: nginx:stable-alpine # Imagem Nginx leve e estável
+    restart: always
+    ports:
+      - "8321:80" # <-- Nginx escutará na porta 112 do HOST e encaminhará para a porta 80 do CONTAINER Nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Monta seu arquivo de configuração
+    depends_on:
+      - api # Garante que a API esteja rodando antes do Nginx
+
+  # Serviço da API FastAPI (renomeado de 'controller' para 'api')
+  api:
+    image: guhzantut/kiplaca-controller:latest # Imagem oficial do PostgreSQL leve
+    build: # <-- Adicione esta seção para construir a imagem localmente
+      context: ./controller_api
+      dockerfile: Dockerfile
+    restart: always # Garante que o DB sempre tente reiniciar em caso de falha
+    env_file:
+      - .env # Carrega variáveis de ambiente do arquivo .env na raiz
+    volumes:
+      # Mapeia o diretório de saída do YOLO no host para o container API
+      # O serviço YOLO também precisará gravar neste volume se ele gera os crops.
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+    depends_on:
+      - db   # Garante que o banco de dados esteja iniciado
+      - yolo # Dependência no serviço YOLO
+      - ocr  # Dependência no serviço OCR
+      - ezocr # Dependência no serviço ezOCR
+    # Define um script de entrada para executar migrações e iniciar a aplicação
+    entrypoint: ./entrypoint.sh # Caminho do script dentro do container
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] # Comando principal para o entrypoint
+
+  # Serviço PostgreSQL
+  db:
+    image: postgres:14-alpine # Imagem oficial do PostgreSQL leve
+    #restart: always # Garante que o DB sempre tente reiniciar em caso de falha
+    env_file:
+      - .env # Carrega variáveis como POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432" # Opcional: expor a porta do DB para acesso externo (ferramentas de DB)
+    volumes:
+      - ./data/db:/var/lib/postgresql/data # Volume persistente para os dados do DB
+
+  # Serviço YOLO
+  yolo:
+    image: guhzantut/ultralytics:latest # Sua imagem YOLO existente
+    build: # <-- Adicione esta seção para construir a imagem localmente
+      context: ./localizer/ultralytics # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+    volumes:
+      # Certifique-se que o YOLO dentro do container salva os crops em /brplates/runs
+      # para que o volume yolo_runs mapeie corretamente.
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR} # Mapeia o diretório yolo_runs do host para o container YOLO
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu] # Habilita o uso de GPU
+    ipc: host # Configuração de IPC para compartilhamento de memória (útil para GPU)
+    runtime: nvidia # Habilita o runtime NVIDIA para GPU
+    stdin_open: true # Mantém stdin aberto (para debug ou interação)
+    tty: true # Aloca um pseudo-TTY (para debug ou interação)
+    expose:
+      - "8001" # A porta interna que o YOLO escuta (sem mapeamento externo)
+
+  # Serviço OCR
+  ocr:
+    image: guhzantut/kiplaca-anpr:latest # Sua imagem OCR existente
+    build: # <-- Adicione esta seção para construir a imagem localmente
+      context: ./reader/openalpr # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu] # Habilita o uso de GPU
+    volumes:
+      # Se o OCR precisa ler os crops do YOLO, ele também precisará deste volume
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+    expose:
+      - "8002" # A porta interna que o OCR escuta
+
+  # Serviço ezOCR
+  ezocr:
+    image: guhzantut/kiplaca-anpr-ez:latest # Sua imagem ezOCR existente
+    build: # <-- Adicione esta seção para construir a imagem localmente
+      context: ./reader/easyocr # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu] # Habilita o uso de GPU
+    ipc: host # Configuração de IPC para compartilhamento de memória (útil para GPU)
+    runtime: nvidia # Habilita o runtime NVIDIA para GPU
+    stdin_open: true # Mantém stdin aberto (para debug ou interação)
+    tty: true # Aloca um pseudo-TTY (para debug ou interação)
+    volumes:
+      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+    expose:
+      - "8005" # A porta interna que o ezOCR escuta
