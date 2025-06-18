@@ -82,7 +82,6 @@ services:
       - ./controller_api/.env
     volumes:
       - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR} # Workers precisam dos mesmos volumes de saída para processar
-      - ${YOLO_WEIGHTS}:/brplates/yolo_weights # Workers podem precisar dos pesos YOLO
     depends_on:
       - db
       - redis # <-- Worker depende do Redis
@@ -100,7 +99,7 @@ services:
       context: ./localizer/ultralytics # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
       dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
     environment:
-      - YOLO_WEIGHTS=/brplates/yolo_weights/best.pt
+      - YOLO_WEIGHTS:/brplates/yolo_weights/best.pt
     volumes:
       # Certifique-se que o YOLO dentro do container salva os crops em /brplates/runs
       # para que o volume yolo_runs mapeie corretamente.
