@@ -30,7 +30,39 @@ services:
     # Define um script de entrada para executar migrações e iniciar a aplicação
     entrypoint: /usr/local/bin/entrypoint.sh # Caminho do script dentro do container
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] # Comando principal para o entrypoint
+    expose:
+      - "8000" # A porta interna que a API escuta (sem mapeamento externo)
 
+  redis:
+    image: redis:6-alpine # Imagem Redis leve
+    restart: always
+    ports:
+      - "6379:6379" # Opcional: expor a porta para acesso externo
+    volumes:
+      - ./redis_data:/data # Volume persistente para os dados do Redis
+  
+  # NOVO SERVIÇO: Celery Worker
+  celery_worker:
+    image: guhzantut/kiplaca-controller:latest # Mesma imagem da API, pois executa o mesmo código
+    build:
+      context: ./controller_api
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./controller_api/.env
+    volumes:
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR} # Workers precisam dos mesmos volumes de saída para processar
+      - ${YOLO_WEIGHTS}:/brplates/yolo_weights # Workers podem precisar dos pesos YOLO
+    depends_on:
+      - db
+      - redis # <-- Worker depende do Redis
+      - yolo
+      - ocr
+      - ezocr
+    # O comando que o Celery Worker vai executar para iniciar
+    # -A app.main:celery_app: Aponta para a instância do Celery que vamos criar em app/main.py
+    command: ["celery", "-A", "app.main:celery_app", "worker", "-l", "info", "-P", "solo"] # -P solo para dev
+      
   # Serviço PostgreSQL
   db:
     image: postgres:14-alpine # Imagem oficial do PostgreSQL leve
