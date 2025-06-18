@@ -36,10 +36,10 @@ services:
   redis:
     image: redis:6-alpine # Imagem Redis leve
     restart: always
-    ports:
-      - "6379:6379" # Opcional: expor a porta para acesso externo
     volumes:
       - ./redis_data:/data # Volume persistente para os dados do Redis
+    expose:
+      - "6379" # A porta interna que o Redis escuta (sem mapeamento externo)
   
   # NOVO SERVIÇO: Celery Worker
   celery_worker:
