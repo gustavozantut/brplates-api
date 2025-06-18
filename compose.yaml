@@ -23,7 +23,7 @@ services:
       - "5432:5432" # Opcional: expor a porta do DB para acesso externo (ferramentas de DB)
     volumes:
       - ./data/db:/var/lib/postgresql/data # Volume persistente para os dados do DB
-      - 
+
   redis:
     image: redis:6-alpine # Imagem Redis leve
     restart: always
