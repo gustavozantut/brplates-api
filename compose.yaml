@@ -67,7 +67,7 @@ services:
       - ezocr # Dependência no serviço ezOCR
     # Define um script de entrada para executar migrações e iniciar a aplicação
     entrypoint: /usr/local/bin/entrypoint.sh # Caminho do script dentro do container
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
+    command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
     expose:
       - "8000" # A porta interna que a API escuta (sem mapeamento externo)
   
@@ -79,7 +79,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ./controller_api/.env
+      - .env
     volumes:
       - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR} # Workers precisam dos mesmos volumes de saída para processar
     depends_on:
@@ -90,7 +90,7 @@ services:
       - ezocr
     # O comando que o Celery Worker vai executar para iniciar
     # -A app.main:celery_app: Aponta para a instância do Celery que vamos criar em app/main.py
-    command: ["celery", "-A", "app.main:celery_app", "worker", "-l", "info", "-P", "solo"] # -P solo para dev
+    command: ["celery", "-A", "app.celery_app.celery", "worker", "-l", "info", "-P", "solo"] # -P solo para dev
 
   # Serviço YOLO
   yolo:
