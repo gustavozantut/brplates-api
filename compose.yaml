@@ -28,7 +28,7 @@ services:
       - ocr  # Dependência no serviço OCR
       - ezocr # Dependência no serviço ezOCR
     # Define um script de entrada para executar migrações e iniciar a aplicação
-    entrypoint: ./entrypoint.sh # Caminho do script dentro do container
+    entrypoint: /usr/local/bin/entrypoint.sh # Caminho do script dentro do container
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] # Comando principal para o entrypoint
 
   # Serviço PostgreSQL
