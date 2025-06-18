@@ -1,3 +1,4 @@
 *.env
 key*.*
 data
+yolo_weights

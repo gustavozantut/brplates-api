@@ -52,9 +52,12 @@ services:
     build: # <-- Adicione esta seção para construir a imagem localmente
       context: ./localizer/ultralytics # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
       dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+    environment:
+      - YOLO_WEIGHTS=/brplates/yolo_weights/best.pt
     volumes:
       # Certifique-se que o YOLO dentro do container salva os crops em /brplates/runs
       # para que o volume yolo_runs mapeie corretamente.
+      - ${YOLO_WEIGHTS_DIR}:/brplates/yolo_weights # Mapeia o diretório de pesos do YOLO do host para o container
       - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR} # Mapeia o diretório yolo_runs do host para o container YOLO
     deploy:
       resources:
