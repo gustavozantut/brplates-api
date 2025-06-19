@@ -3,15 +3,53 @@ services:
     image: nginx:stable-alpine # Imagem Nginx leve e estável
     restart: always
     ports:
-      - "8321:80" # <-- Nginx escutará na porta 112 do HOST e encaminhará para a porta 80 do CONTAINER Nginx
+      - "8321:80" # <-- Nginx escutará na porta 80 do HOST e encaminhará para a porta 80 do CONTAINER Nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Monta seu arquivo de configuração
     depends_on:
       - api # Garante que a API esteja rodando antes do Nginx
 
+  # Serviço PostgreSQL
+  db:
+    image: postgres:14-alpine # Imagem oficial do PostgreSQL leve
+    #restart: always # Garante que o DB sempre tente reiniciar em caso de falha
+    env_file:
+      - .env # Carrega variáveis como POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432" # Opcional: expor a porta do DB para acesso externo (ferramentas de DB)
+    volumes:
+      - ./data/db:/var/lib/postgresql/data # Volume persistente para os dados do DB
+
+  redis:
+    image: redis:6-alpine # Imagem Redis leve
+    restart: always
+    command: [
+      "redis-server",
+      "--dir", "/data",
+      "--appendonly", "yes",
+      "--appendfsync", "everysec",
+      "--save", "900", "1",
+      "--save", "300", "10",
+      "--save", "60", "10000",
+      "--maxmemory", "5gb",
+      "--maxmemory-policy", "allkeys-lru"
+    ]
+    deploy:
+      resources:
+        limits:
+          memory: 5G
+    volumes:
+      - ./redis_data:/data # Volume persistente para os dados do Redis
+    expose:
+      - "6379" # A porta interna que o Redis escuta (sem mapeamento externo)
+
   # Serviço da API FastAPI (renomeado de 'controller' para 'api')
   api:
-    image: guhzantut/kiplaca-controller:latest # Imagem oficial do PostgreSQL leve
+    image: guhzantut/kiplaca-controller:celery # Imagem oficial do PostgreSQL leve
     build: # <-- Adicione esta seção para construir a imagem localmente
       context: ./controller_api
       dockerfile: Dockerfile
@@ -29,31 +67,39 @@ services:
       - ezocr # Dependência no serviço ezOCR
     # Define um script de entrada para executar migrações e iniciar a aplicação
     entrypoint: /usr/local/bin/entrypoint.sh # Caminho do script dentro do container
-    command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker"]
-
-  # Serviço PostgreSQL
-  db:
-    image: postgres:14-alpine # Imagem oficial do PostgreSQL leve
-    #restart: always # Garante que o DB sempre tente reiniciar em caso de falha
+    command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
+    expose:
+      - "8000" # A porta interna que a API escuta (sem mapeamento externo)
+  
+  # NOVO SERVIÇO: Celery Worker
+  celery_worker:
+    image: guhzantut/kiplaca-controller:celery # Mesma imagem da API, pois executa o mesmo código
+    build:
+      context: ./controller_api
+      dockerfile: Dockerfile
+    restart: always
     env_file:
-      - .env # Carrega variáveis como POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432" # Opcional: expor a porta do DB para acesso externo (ferramentas de DB)
+      - .env
     volumes:
-      - ./data/db:/var/lib/postgresql/data # Volume persistente para os dados do DB
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR} # Workers precisam dos mesmos volumes de saída para processar
+    depends_on:
+      - db
+      - redis # <-- Worker depende do Redis
+      - yolo
+      - ocr
+      - ezocr
+    # O comando que o Celery Worker vai executar para iniciar
+    # -A app.main:celery_app: Aponta para a instância do Celery que vamos criar em app/main.py
+    command: ["celery", "-A", "app.celery_app.celery", "worker", "-l", "info", "--concurrency=2"] # -P solo para dev
 
   # Serviço YOLO
   yolo:
-    image: guhzantut/ultralytics:latest # Sua imagem YOLO existente
+    image: guhzantut/ultralytics:celery # Sua imagem YOLO existente
     build: # <-- Adicione esta seção para construir a imagem localmente
       context: ./localizer/ultralytics # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
       dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
     env_file:
-      - .env # Carrega variáveis de ambiente do arquivo .env na raiz
+      - .env
     volumes:
       # Certifique-se que o YOLO dentro do container salva os crops em /brplates/runs
       # para que o volume yolo_runs mapeie corretamente.
@@ -68,13 +114,13 @@ services:
     runtime: nvidia # Habilita o runtime NVIDIA para GPU
     stdin_open: true # Mantém stdin aberto (para debug ou interação)
     tty: true # Aloca um pseudo-TTY (para debug ou interação)
-    command: ["gunicorn", "main:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8001"]
+    command: ["gunicorn", "main:app", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8001"] # Comando principal para o entrypoint
     expose:
       - "8001" # A porta interna que o YOLO escuta (sem mapeamento externo)
 
   # Serviço OCR
   ocr:
-    image: guhzantut/kiplaca-anpr:latest # Sua imagem OCR existente
+    image: guhzantut/kiplaca-anpr:celery # Sua imagem OCR existente
     build: # <-- Adicione esta seção para construir a imagem localmente
       context: ./reader/openalpr # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
       dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
@@ -92,7 +138,7 @@ services:
 
   # Serviço ezOCR
   ezocr:
-    image: guhzantut/kiplaca-anpr-ez:latest # Sua imagem ezOCR existente
+    image: guhzantut/kiplaca-anpr-ez:celery # Sua imagem ezOCR existente
     build: # <-- Adicione esta seção para construir a imagem localmente
       context: ./reader/easyocr_brplates # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
       dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
