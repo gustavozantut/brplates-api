@@ -24,32 +24,9 @@ services:
     volumes:
       - ./data/db:/var/lib/postgresql/data # Volume persistente para os dados do DB
 
-  redis:
-    image: redis:6-alpine # Imagem Redis leve
-    restart: always
-    command: [
-      "redis-server",
-      "--dir", "/data",
-      "--appendonly", "yes",
-      "--appendfsync", "everysec",
-      "--save", "900", "1",
-      "--save", "300", "10",
-      "--save", "60", "10000",
-      "--maxmemory", "5gb",
-      "--maxmemory-policy", "allkeys-lru"
-    ]
-    deploy:
-      resources:
-        limits:
-          memory: 5G
-    volumes:
-      - ./redis_data:/data # Volume persistente para os dados do Redis
-    expose:
-      - "6379" # A porta interna que o Redis escuta (sem mapeamento externo)
-
   # Serviço da API FastAPI (renomeado de 'controller' para 'api')
   api:
-    image: guhzantut/kiplaca-controller:celery # Imagem oficial do PostgreSQL leve
+    image: guhzantut/kiplaca-controller:fast-api # Imagem oficial do PostgreSQL leve
     build: # <-- Adicione esta seção para construir a imagem localmente
       context: ./controller_api
       dockerfile: Dockerfile
@@ -70,27 +47,6 @@ services:
     command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
     expose:
       - "8000" # A porta interna que a API escuta (sem mapeamento externo)
-  
-  # NOVO SERVIÇO: Celery Worker
-  celery_worker:
-    image: guhzantut/kiplaca-controller:celery # Mesma imagem da API, pois executa o mesmo código
-    build:
-      context: ./controller_api
-      dockerfile: Dockerfile
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR} # Workers precisam dos mesmos volumes de saída para processar
-    depends_on:
-      - db
-      - redis # <-- Worker depende do Redis
-      - yolo
-      - ocr
-      - ezocr
-    # O comando que o Celery Worker vai executar para iniciar
-    # -A app.main:celery_app: Aponta para a instância do Celery que vamos criar em app/main.py
-    command: ["celery", "-A", "app.celery_app.celery", "worker", "-l", "info", "--concurrency=2"] # -P solo para dev
 
   # Serviço YOLO
   yolo:
