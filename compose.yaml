@@ -67,7 +67,7 @@ services:
       - ezocr # Dependência no serviço ezOCR
     # Define um script de entrada para executar migrações e iniciar a aplicação
     entrypoint: /usr/local/bin/entrypoint.sh # Caminho do script dentro do container
-    command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
+    command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
     expose:
       - "8000" # A porta interna que a API escuta (sem mapeamento externo)
   
@@ -90,7 +90,7 @@ services:
       - ezocr
     # O comando que o Celery Worker vai executar para iniciar
     # -A app.main:celery_app: Aponta para a instância do Celery que vamos criar em app/main.py
-    command: ["celery", "-A", "app.celery_app.celery", "worker", "-l", "info", "--concurrency=4"] # -P solo para dev
+    command: ["celery", "-A", "app.celery_app.celery", "worker", "-l", "info", "--concurrency=6"] # -P solo para dev
 
   # Serviço YOLO
   yolo:
@@ -114,7 +114,7 @@ services:
     runtime: nvidia # Habilita o runtime NVIDIA para GPU
     stdin_open: true # Mantém stdin aberto (para debug ou interação)
     tty: true # Aloca um pseudo-TTY (para debug ou interação)
-    command: ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8001"] # Comando principal para o entrypoint
+    command: ["gunicorn", "main:app", "--workers", "6", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8001"] # Comando principal para o entrypoint
     expose:
       - "8001" # A porta interna que o YOLO escuta (sem mapeamento externo)
 
