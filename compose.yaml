@@ -44,7 +44,7 @@ services:
       - ezocr # Dependência no serviço ezOCR
     # Define um script de entrada para executar migrações e iniciar a aplicação
     entrypoint: /usr/local/bin/entrypoint.sh # Caminho do script dentro do container
-    command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
+    command: ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker"] # Comando principal para o entrypoint
     expose:
       - "8000" # A porta interna que a API escuta (sem mapeamento externo)
 
@@ -70,7 +70,7 @@ services:
     runtime: nvidia # Habilita o runtime NVIDIA para GPU
     stdin_open: true # Mantém stdin aberto (para debug ou interação)
     tty: true # Aloca um pseudo-TTY (para debug ou interação)
-    command: ["gunicorn", "main:app", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8001"] # Comando principal para o entrypoint
+    command: ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8001"] # Comando principal para o entrypoint
     expose:
       - "8001" # A porta interna que o YOLO escuta (sem mapeamento externo)
 
@@ -88,7 +88,7 @@ services:
     volumes:
       # Se o OCR precisa ler os crops do YOLO, ele também precisará deste volume
       - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
-    command: ["gunicorn", "main:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8002"]
+    command: ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8002"]
     expose:
       - "8002" # A porta interna que o OCR escuta
 
@@ -115,6 +115,49 @@ services:
       - "8005" # A porta interna que o ezOCR escuta
 
   performance_test:
+    restart: always
+    image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
+    env_file:
+      - .env
+    build: # <-- Adicione esta seção para construir a imagem localmente
+      context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+    volumes:
+      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+    command: ["python", "main.py"]
+    expose:
+      - "8005" # A porta interna que o ezOCR escuta
+  performance_test_1:
+    restart: always
+    image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
+    env_file:
+      - .env
+    build: # <-- Adicione esta seção para construir a imagem localmente
+      context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+    volumes:
+      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+    command: ["python", "main.py"]
+    expose:
+      - "8005" # A porta interna que o ezOCR escuta
+  performance_test_2:
+    restart: always
+    image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
+    env_file:
+      - .env
+    build: # <-- Adicione esta seção para construir a imagem localmente
+      context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+    volumes:
+      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+    command: ["python", "main.py"]
+    expose:
+      - "8005" # A porta interna que o ezOCR escuta
+  performance_test_3:
+    restart: always
     image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
     env_file:
       - .env

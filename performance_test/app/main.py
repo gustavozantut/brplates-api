@@ -53,7 +53,6 @@ def medir_requisicao(i):
 def main():
     for i in range(1, NUM_REQUESTS + 1):
         medir_requisicao(i)
-        time.sleep(1)
 
     logger.info(f"\n✅ Todos os registros foram gravados no banco.")
 
