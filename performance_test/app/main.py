@@ -3,10 +3,14 @@ import requests
 import psycopg2
 from pathlib import Path
 import os
-from dotenv import load_dotenv
+import logging
 
-# 📁 Carrega variáveis do .env
-load_dotenv()
+# Configuração básica de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # 🔐 Conexão com o banco
 conn = psycopg2.connect(
@@ -33,7 +37,7 @@ def medir_requisicao(i):
         response = requests.post(API_URL, files=files, headers=headers)
         fim = time.perf_counter()
         tempo = fim - inicio
-        print(f"#{i} - Status: {response.status_code} - Tempo: {tempo:.2f}s")
+        logger.info(f"#{i} - Status: {response.status_code} - Tempo: {tempo:.2f}s")
 
         # Gravar no banco
         cursor.execute(
@@ -50,12 +54,12 @@ def main():
     for i in range(1, NUM_REQUESTS + 1):
         medir_requisicao(i)
 
-    print(f"\n✅ Todos os registros foram gravados no banco.")
+    logger.info(f"\n✅ Todos os registros foram gravados no banco.")
 
 
 if __name__ == "__main__":
     if not Path(IMAGE_PATH).exists():
-        print(f"❌ Imagem {IMAGE_PATH} não encontrada.")
+        logger.warning(f"❌ Imagem não encontrada: {IMAGE_PATH}")
     else:
         try:
             main()
