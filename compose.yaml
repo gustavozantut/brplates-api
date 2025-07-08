@@ -114,59 +114,59 @@ services:
     expose:
       - "8005" # A porta interna que o ezOCR escuta
 
-  performance_test:
-    restart: always
-    image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
-    env_file:
-      - .env
-    build: # <-- Adicione esta seção para construir a imagem localmente
-      context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
-      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
-    volumes:
-      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
-      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
-    command: ["python", "main.py"]
-    expose:
-      - "8005" # A porta interna que o ezOCR escuta
-  performance_test_1:
-    restart: always
-    image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
-    env_file:
-      - .env
-    build: # <-- Adicione esta seção para construir a imagem localmente
-      context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
-      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
-    volumes:
-      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
-      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
-    command: ["python", "main.py"]
-    expose:
-      - "8005" # A porta interna que o ezOCR escuta
-  performance_test_2:
-    restart: always
-    image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
-    env_file:
-      - .env
-    build: # <-- Adicione esta seção para construir a imagem localmente
-      context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
-      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
-    volumes:
-      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
-      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
-    command: ["python", "main.py"]
-    expose:
-      - "8005" # A porta interna que o ezOCR escuta
-  performance_test_3:
-    restart: always
-    image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
-    env_file:
-      - .env
-    build: # <-- Adicione esta seção para construir a imagem localmente
-      context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
-      dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
-    volumes:
-      # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
-      - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
-    command: ["python", "main.py"]
-    expose:
-      - "8005" # A porta interna que o ezOCR escuta
+  # performance_test:
+  #   restart: always
+  #   image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
+  #   env_file:
+  #     - .env
+  #   build: # <-- Adicione esta seção para construir a imagem localmente
+  #     context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+  #     dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+  #   volumes:
+  #     # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+  #     - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+  #   command: ["python", "main.py"]
+  #   expose:
+  #     - "8005" # A porta interna que o ezOCR escuta
+  # performance_test_1:
+  #   restart: always
+  #   image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
+  #   env_file:
+  #     - .env
+  #   build: # <-- Adicione esta seção para construir a imagem localmente
+  #     context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+  #     dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+  #   volumes:
+  #     # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+  #     - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+  #   command: ["python", "main.py"]
+  #   expose:
+  #     - "8005" # A porta interna que o ezOCR escuta
+  # performance_test_2:
+  #   restart: always
+  #   image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
+  #   env_file:
+  #     - .env
+  #   build: # <-- Adicione esta seção para construir a imagem localmente
+  #     context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+  #     dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+  #   volumes:
+  #     # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+  #     - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+  #   command: ["python", "main.py"]
+  #   expose:
+  #     - "8005" # A porta interna que o ezOCR escuta
+  # performance_test_3:
+  #   restart: always
+  #   image: guhzantut/kiplaca-performance_test:fast-api # Sua imagem ezOCR existente
+  #   env_file:
+  #     - .env
+  #   build: # <-- Adicione esta seção para construir a imagem localmente
+  #     context: ./performance_test # <-- O DIRETÓRIO ONDE SEU DOCKERFILE E CÓDIGO DA API ESTÃO
+  #     dockerfile: Dockerfile    # <-- O NOME DO SEU DOCKERFILE DENTRO DESSE CONTEXTO
+  #   volumes:
+  #     # Se o ezOCR precisa ler os crops do YOLO, ele também precisará deste volume
+  #     - ${HOST_OUTPUT_DIR}:${YOLO_OUTPUT_DIR}
+  #   command: ["python", "main.py"]
+  #   expose:
+  #     - "8005" # A porta interna que o ezOCR escuta
